@@ -3,10 +3,10 @@ import { useEffect } from 'react'
 
 
 
-const Card = ({ cardData, id, flippedCards, setFlippedCards, score, setScore, openCards }) => {
+const Card = ({ cardData, id, flippedCards, setFlippedCards, completeCards }) => {
 
   const flip = (id) => {
-    if (openCards.includes(id)) {
+    if (flippedCards.includes(id) || completeCards.includes(id)) {
       return 'flipped'
     } else {
       return 'unflipped'
@@ -14,11 +14,12 @@ const Card = ({ cardData, id, flippedCards, setFlippedCards, score, setScore, op
   }
 
   const handleClick = () => {
-    if (flippedCards.length === 0) {
-      setFlippedCards([id])
-      setScore(score + 1)
-    } else if (flippedCards.length === 1) {
-      setFlippedCards([...flippedCards, id])
+    if (!completeCards.includes(id)) {
+      if (flippedCards.length === 0) {
+        setFlippedCards([id])
+      } else if (flippedCards.length === 1) {
+        setFlippedCards([...flippedCards, id])
+      }
     }
   }
 

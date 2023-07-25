@@ -2,69 +2,58 @@ import Card from "./Card";
 import { useState, useEffect } from 'react';
 import './App.css'
 
-const uniqueCards = [
-  {
-    face: 1
-  },
-  {
-    face: 2
-  },
-  {
-    face: 3
-  },
-  {
-    face: 4
-  },
-  {
-    face: 6
-  },
-  {
-    face: 7
-  },
-  {
-    face: 8
-  },
-  {
-    face: 9
-  },
-  {
-    face: 10
-  },
-  {
-    face: 11
-  }
-]
-
-
-
 // make deck into a state
 
 
 function App() {
 
+  const [level, setLevel] = useState(1)
+  const [bombCount, setBombCount] = useState(0)
+  const [numOfPairs, setNumOfPairs] = useState(1)
+  const [deck, setDeck] = useState(shuffleCards(deckGenerator()))
   const [flippedCards, setFlippedCards] = useState([])
   const [completeCards, setCompleteCards] = useState([])
-  const [score, setScore] = useState(0)
-  const [bombCount, setBombCount] = useState(0)
-  const [highScore, setHighScore] = useState(0)
-  const [numOfPairs, setNumOfPairs] = useState(2)
-  const [deck, setDeck] = useState(createDeck())
-  const [level, setLevel] = useState(1)
+  const [moves, setMoves] = useState(0)
 
+  // determine level
+  // useeffect => level
 
+  // set num of bombs
+  // set num of pairs
+  const difficultySetter = () => {
+    if (level === 1) {
+      setNumOfPairs(2)
+      setBombCount(0)
+      setMoves(999)
+    } else if (level < 4) {
+      setNumOfPairs(numOfPairs + 1)
+      setBombCount(0)
+      setMoves(((level * 2) + 2) * 2)
+    } else if (level < 8) {
+      setNumOfPairs(numOfPairs + 1)
+      setBombCount(1)
+      setMoves(((level * 2) * 2))
+    }
+  }
+
+  useEffect(difficultySetter, [level])
+
+  // make deck
+  // shuffle deck
+  // generate cards
   function deckGenerator() {
-    let deck = []
+    let newDeck = []
     for (let i = 0; i < bombCount; i++) {
       let map = {};
       map['face'] = 'BOMB';
-      deck.push(map)
+      newDeck.push(map)
     }
     for (let i = 0; i < numOfPairs; i++) {
       let map = {};
       map['face'] = i;
-      deck.push(map)
+      newDeck.push(map)
     }
-    return deck
+    return newDeck
   }
 
   function shuffleCards(stack) {
@@ -77,10 +66,11 @@ function App() {
     }
     return stack;
   }
-
   function createDeck() {
-    return shuffleCards(deckGenerator())
+    return setDeck(shuffleCards(deckGenerator()))
   }
+
+  useEffect(createDeck, [numOfPairs])
 
   const cardLayout = deck.map((cardInfo, index) => {
     return <Card
@@ -93,70 +83,72 @@ function App() {
     />;
   })
 
-  const difficultySetter = () => {
-    if (level < 4) {
-      setNumOfPairs(numOfPairs + 2)
-      setBombCount(1)
-    } else if (level < 8) {
-      setNumOfPairs(numOfPairs + 1)
-      setBombCount(3)
-    }
-
-  }
-
-  const handleReset = () => {
-    setFlippedCards([])
-    setCompleteCards([])
-    if (highScore === 0) {
-      setHighScore(score)
-    } else {
-      setHighScore(Math.min(score, highScore))
-    }
-    setScore(0)
-    difficultySetter()
-  }
-
-  useEffect(() => {
-    return createDeck
-  }, [numOfPairs])
-
-
-  const checker = () => {
+  // game logic
+  // add level
+  const isMatchingCards = () => {
     if (flippedCards.length === 2) {
       let index1 = flippedCards[0];
       let index2 = flippedCards[1];
-      setScore(score + 1)
+      setMoves(moves - 1)
+      if (moves === 0) {
+        handleLevelLose()
+      }
       if (
-        deck[index1].face === deck[index2].face &&
-        index1 !== index2) {
-        console.log('match')
-        setCompleteCards([...completeCards, ...flippedCards])
+        deck[index1].face === deck[index2].face && index1 !== index2) {
+        if (deck[index1].face === 'BOMB') {
+          handleLevelLose()
+        } else {
+          setCompleteCards([...completeCards, ...flippedCards])
+        }
       }
       setTimeout(() => { setFlippedCards([]) }, 500)
     }
   }
 
-  const isGameover = () => (completeCards.length === (deck.length - bombCount * 2))
+  useEffect(isMatchingCards, [flippedCards])
+
+  const isLevelWin = () => (completeCards.length === (deck.length - bombCount * 2))
 
   const checkWin = () => {
-    if (isGameover()) {
+    if (isLevelWin()) {
       alert("goodjob")
-      setLevel(level + 1)
-      handleReset()
+      handleLevelWin()
     }
-    console.log('completed', completeCards)
   }
 
   useEffect(checkWin, [completeCards])
-  useEffect(checker, [flippedCards])
+
+  const handleLevelLose = () => {
+    alert('you lose')
+    setLevel(1)
+    setFlippedCards([])
+    setCompleteCards([])
+    setMoves(0)
+  }
+
+  const handleLevelWin = () => {
+    setLevel(level + 1)
+    setFlippedCards([])
+    setCompleteCards([])
+    setMoves(0)
+  }
+  // game over
+
+
+
+
+
+
+
+
+
 
 
   return (
     <div className="App">
-      <div className="scoreContainer">
+      <div className="movesContainer">
         <p className="level">Level: {level}</p>
-        <p className="score">Turns: {score}</p>
-        {/* <p className="highScore">Record: {highScore}</p> */}
+        <p className="moves">Moves: {moves}</p>
       </div>
       <div className="deckContainer">
         {cardLayout}

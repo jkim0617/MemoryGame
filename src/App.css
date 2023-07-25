@@ -29,7 +29,7 @@ p {
 }
 
 .unflipped p {
-  /* display: none; */
+  display: none;
 }
 
 .deckContainer {

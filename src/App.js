@@ -41,7 +41,33 @@ const uniqueCards = [
 
 
 function App() {
-  const shuffleCards = (stack) => {
+
+  const [flippedCards, setFlippedCards] = useState([])
+  const [completeCards, setCompleteCards] = useState([])
+  const [score, setScore] = useState(0)
+  const [bombCount, setBombCount] = useState(0)
+  const [highScore, setHighScore] = useState(0)
+  const [numOfPairs, setNumOfPairs] = useState(2)
+  const [deck, setDeck] = useState(createDeck())
+  const [level, setLevel] = useState(1)
+
+
+  function deckGenerator() {
+    let deck = []
+    for (let i = 0; i < bombCount; i++) {
+      let map = {};
+      map['face'] = 'BOMB';
+      deck.push(map)
+    }
+    for (let i = 0; i < numOfPairs; i++) {
+      let map = {};
+      map['face'] = i;
+      deck.push(map)
+    }
+    return deck
+  }
+
+  function shuffleCards(stack) {
     stack = [...stack, ...stack]
     for (let i = stack.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -51,13 +77,10 @@ function App() {
     }
     return stack;
   }
-  const [flippedCards, setFlippedCards] = useState([])
-  const [completeCards, setCompleteCards] = useState([])
-  const [score, setScore] = useState(0)
-  const [highScore, setHighScore] = useState(0)
-  const [deck, setDeck] = useState(shuffleCards(uniqueCards))
 
-
+  function createDeck() {
+    return shuffleCards(deckGenerator())
+  }
 
   const cardLayout = deck.map((cardInfo, index) => {
     return <Card
@@ -70,6 +93,17 @@ function App() {
     />;
   })
 
+  const difficultySetter = () => {
+    if (level < 4) {
+      setNumOfPairs(numOfPairs + 2)
+      setBombCount(1)
+    } else if (level < 8) {
+      setNumOfPairs(numOfPairs + 1)
+      setBombCount(3)
+    }
+
+  }
+
   const handleReset = () => {
     setFlippedCards([])
     setCompleteCards([])
@@ -79,8 +113,13 @@ function App() {
       setHighScore(Math.min(score, highScore))
     }
     setScore(0)
-    setDeck(shuffleCards(uniqueCards))
+    difficultySetter()
   }
+
+  useEffect(() => {
+    return createDeck
+  }, [numOfPairs])
+
 
   const checker = () => {
     if (flippedCards.length === 2) {
@@ -97,11 +136,12 @@ function App() {
     }
   }
 
-  const isGameover = () => (completeCards.length === deck.length)
+  const isGameover = () => (completeCards.length === (deck.length - bombCount * 2))
 
   const checkWin = () => {
     if (isGameover()) {
       alert("goodjob")
+      setLevel(level + 1)
       handleReset()
     }
     console.log('completed', completeCards)
@@ -114,8 +154,9 @@ function App() {
   return (
     <div className="App">
       <div className="scoreContainer">
+        <p className="level">Level: {level}</p>
         <p className="score">Turns: {score}</p>
-        <p className="highScore">Record: {highScore}</p>
+        {/* <p className="highScore">Record: {highScore}</p> */}
       </div>
       <div className="deckContainer">
         {cardLayout}
